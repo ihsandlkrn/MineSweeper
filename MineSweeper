@@ -1,0 +1,141 @@
+import java.util.Random;
+import java.util.Scanner;
+
+class MineSweeper {
+    private int row;
+    private int col;
+    private int[][] mineField;
+    private boolean[][] revealed;
+    private int totalMines;
+
+    public MineSweeper(int row, int col) {
+        this.row = row;
+        this.col = col;
+        this.mineField = new int[row][col];
+        this.revealed = new boolean[row][col];
+        this.totalMines = (row * col) / 4; // Mayın sayısını çeyrek olarak belirle
+        initializeMineField();
+    }
+
+    private void initializeMineField() {
+        // Mayınları rastgele yerleştir
+        Random random = new Random();
+        for (int i = 0; i < totalMines; i++) {
+            int randRow = random.nextInt(row);
+            int randCol = random.nextInt(col);
+
+            // Aynı yere iki kez mayın eklemeyi önle
+            while (mineField[randRow][randCol] == -1) {
+                randRow = random.nextInt(row);
+                randCol = random.nextInt(col);
+            }
+
+            mineField[randRow][randCol] = -1; // -1, mayını temsil eder
+        }
+    }
+
+    private void printBoard() {
+        for (int i = 0; i < row; i++) {
+            for (int j = 0; j < col; j++) {
+                if (revealed[i][j]) {
+                    System.out.print(mineField[i][j] + " ");
+                } else {
+                    System.out.print("* ");
+                }
+            }
+            System.out.println();
+        }
+    }
+
+    private boolean isValidMove(int r, int c) {
+        return r >= 0 && r < row && c >= 0 && c < col && !revealed[r][c];
+    }
+
+    private int countAdjacentMines(int r, int c) {
+        int count = 0;
+        for (int i = -1; i <= 1; i++) {
+            for (int j = -1; j <= 1; j++) {
+                int newRow = r + i;
+                int newCol = c + j;
+                if (isValidMove(newRow, newCol) && mineField[newRow][newCol] == -1) {
+                    count++;
+                }
+            }
+        }
+        return count;
+    }
+
+    private void revealEmptyCells(int r, int c) {
+        if (!isValidMove(r, c) || revealed[r][c]) {
+            return;
+        }
+
+        revealed[r][c] = true;
+
+        if (countAdjacentMines(r, c) == 0) {
+            for (int i = -1; i <= 1; i++) {
+                for (int j = -1; j <= 1; j++) {
+                    revealEmptyCells(r + i, c + j);
+                }
+            }
+        }
+    }
+
+    public void playGame() {
+        Scanner scanner = new Scanner(System.in);
+
+        while (true) {
+            printBoard();
+
+            System.out.print("Satır seçin: ");
+            int selectedRow = scanner.nextInt();
+            System.out.print("Sütun seçin: ");
+            int selectedCol = scanner.nextInt();
+
+            if (!isValidMove(selectedRow, selectedCol)) {
+                System.out.println("Geçersiz hamle, lütfen tekrar seçin.");
+                continue;
+            }
+
+            if (mineField[selectedRow][selectedCol] == -1) {
+                System.out.println("Oyunu kaybettiniz! Mayına bastınız.");
+                break;
+            }
+
+            revealed[selectedRow][selectedCol] = true;
+
+            if (countAdjacentMines(selectedRow, selectedCol) == 0) {
+                revealEmptyCells(selectedRow, selectedCol);
+            }
+
+            boolean allCellsRevealed = true;
+            for (int i = 0; i < row; i++) {
+                for (int j = 0; j < col; j++) {
+                    if (!revealed[i][j] && mineField[i][j] != -1) {
+                        allCellsRevealed = false;
+                        break;
+                    }
+                }
+            }
+
+            if (allCellsRevealed) {
+                System.out.println("Tebrikler! Oyunu kazandınız!");
+                break;
+            }
+        }
+
+        scanner.close();
+    }
+
+    public static void main(String[] args) {
+        Scanner scanner = new Scanner(System.in);
+
+        System.out.print("Matris satır sayısını girin: ");
+        int row = scanner.nextInt();
+        System.out.print("Matris sütun sayısını girin: ");
+        int col = scanner.nextInt();
+
+        MineSweeper game = new MineSweeper(row, col);
+        game.playGame();
+    }
+}
